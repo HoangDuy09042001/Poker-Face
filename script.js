@@ -2,11 +2,14 @@ const video = document.getElementById('video')
 
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+  faceapi.nets.mtcnn.loadFromUri('/models'),
+  faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
+  faceapi.nets.tinyYolov2.loadFromUri('/models'),
   faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
   faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
   faceapi.nets.faceExpressionNet.loadFromUri('/models')
 ]).then(startVideo)
-
+console.log(faceapi)
 function startVideo() {
   navigator.getUserMedia(
     { video: {} },
@@ -21,17 +24,18 @@ video.addEventListener('play', () => {
   const displaySize = { width: video.width, height: video.height }
   faceapi.matchDimensions(canvas, displaySize)
   setInterval(async () => {
-    const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions()
-    console.log('detection: ', detections)
+    // const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions()
+    const detections = await faceapi.detectAllFaces(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceExpressions()
     detections.sort(function(a, b) {
       return b.detection.box.area - a.detection.box.area;
     });
     if(detections.length>0){
       largestFace = detections[0]
+      console.log('largeestFace: ', largestFace)
       const resizedDetections = faceapi.resizeResults(largestFace, displaySize)
       canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
       faceapi.draw.drawDetections(canvas, resizedDetections)
-      faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
+      // faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
       faceapi.draw.drawFaceExpressions(canvas, resizedDetections)
     }else{
 
